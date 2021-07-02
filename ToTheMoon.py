@@ -5,14 +5,15 @@ import pandas as pd
 import csv
 import talib
 
-
 """
 Final submission function
-
-
+Returns:
+    vector of 100 integers denoting daily position
 """
 def getMyPosition():
-  pass
+    df = get_data('prices250.txt')
+    print(df[0]) #example print used to print all 250 days of data for the first stock
+    return
 
 """
 Function which reads the provided csv file and returns a pandas dataframe containing the data
@@ -29,17 +30,15 @@ def get_data(filename):
             for line in reader:
                 array.append(line[0].split())
             df = pd.DataFrame(np.array(array), dtype=np.float64)
-            #print(df[0])
         except Exception as e:
             print(e)
             pass
-    print(df[0])
     return df
 
 
 # Conventional main python script setup, also testing
 def main():
-  get_data('prices250.txt')
+    getMyPosition()
 
 
 if __name__ == "__main__":
