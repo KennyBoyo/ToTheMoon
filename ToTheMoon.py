@@ -1,26 +1,30 @@
 #hehe xd
 import numpy as np
 import pandas as pd
-#import matplotlib
+import matplotlib
 import csv
-import talib
+import talib as tal
 
 """
 Final submission function
-Returns:
-    vector of 100 integers denoting daily position
+
+:return: np.array | 100 integers denoting daily position
 """
 def getMyPosition():
     df = get_data('prices250.txt')
     print(df[0]) #example print used to print all 250 days of data for the first stock
+    c = get_correl(df)
+    for i in c:
+        print("index1={}, index2={}, correlation={}".format(i.index(1), i.index(sorted(i)[-2]), sorted(i)[-2]))
+    print(df[0].describe())
     return
 
 """
 Function which reads the provided csv file and returns a pandas dataframe containing the data
-Parameters:
-    filename: The name of the file which is read
-Returns:
-    A pandas dataframe containing the data values from the file, each index represents a stock
+
+:param filename: str | The name of the file which is read
+
+:return: pd.Dataframe| dataframe of values from the file, each index represents a stock
 """
 def get_data(filename):
     with open(filename, 'r') as f:
@@ -36,10 +40,33 @@ def get_data(filename):
     return df
 
 
+"""
+Function which determines the correlation between two stocks
+
+:param df: pd.Dataframe | Dataframe values 
+
+:return: 2d array | 100x100 array containing correlation values between the stocks at different indices
+"""
+def get_correl(df):
+    index = 0
+    correlation = []
+    for x in range(df.shape[1]):
+        tempCorr = []
+        for y in range(df.shape[1]):
+            #print("{}, {}, {}".format(correlation, x, y))
+            if y < x:
+                tempCorr.append(correlation[y][x])
+            elif y == x:
+                tempCorr.append(1)
+            else:
+                tempCorr.append(tal.CORREL(df[x], df[y], timeperiod = 250).iloc[-1])
+        correlation.append(tempCorr)
+    return correlation
+    #return tal.CORREL(s1, s2, timeperiod = 250)
+
 # Conventional main python script setup, also testing
 def main():
     getMyPosition()
-
 
 if __name__ == "__main__":
   main()
