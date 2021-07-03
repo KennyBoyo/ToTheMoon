@@ -12,12 +12,23 @@ Final submission function
 """
 def getMyPosition():
     df = get_data('prices250.txt')
+    c = get_correl(df)
+    return
+
+"""
+Function used to test implementation of new functons
+"""
+def getMyPositionTest_Kenzo():
+    df = get_data('prices250.txt')
     print(df[0]) #example print used to print all 250 days of data for the first stock
     c = get_correl(df)
+    print(len(c))
     for i in c:
-        print("index1={}, index2={}, correlation={}".format(i.index(1), i.index(sorted(i)[-2]), sorted(i)[-2]))
+        print("index1={}, index2={}, correlation={}, length"
+              .format(i.index(1), i.index(sorted(i)[-2]), sorted(i)[-2]), len(i))
     print(df[0].describe())
     return
+
 
 """
 Function which reads the provided csv file and returns a pandas dataframe containing the data
@@ -48,7 +59,6 @@ Function which determines the correlation between two stocks
 :return: 2d array | 100x100 array containing correlation values between the stocks at different indices
 """
 def get_correl(df):
-    index = 0
     correlation = []
     for x in range(df.shape[1]):
         tempCorr = []
@@ -59,14 +69,14 @@ def get_correl(df):
             elif y == x:
                 tempCorr.append(1)
             else:
-                tempCorr.append(tal.CORREL(df[x], df[y], timeperiod = 250).iloc[-1])
+                tempCorr.append(tal.CORREL(df[x], df[y], timeperiod = 250).iloc[-1]) #use df.shape[1] for timeperiod?
         correlation.append(tempCorr)
     return correlation
     #return tal.CORREL(s1, s2, timeperiod = 250)
 
 # Conventional main python script setup, also testing
 def main():
-    getMyPosition()
+    getMyPositionTest_Kenzo()
 
 if __name__ == "__main__":
   main()
