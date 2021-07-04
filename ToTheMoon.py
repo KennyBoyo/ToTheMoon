@@ -1,12 +1,9 @@
-#hehe xd
 import numpy as np
 import pandas as pd
 import matplotlib
 import csv
 import talib as tal
 
-# TESTING
-# THIS IS MY BRANCH HAHAHA
 
 """
 Final submission function
@@ -92,17 +89,6 @@ def get_sma(df):
     return sma
 
 
-# Conventional main python script setup, also testing
-def main():
-    pricesFile = "./prices250.txt"
-    prcAll = loadPrices(pricesFile)
-    #getMyPosition(prcAll)
-    getMyPositionTest_Kenzo(prcAll)
-
-if __name__ == "__main__":
-  main()
-
-
 def loadPrices(fn):
     global nt, nInst
     df=pd.read_csv(fn, sep='\s+', header=None, index_col=None)
@@ -135,3 +121,13 @@ class Stock():
 
     def get_sma(self):
         return self._sma
+
+
+def main():
+    pricesFile = "prices250.txt"
+    prcAll = loadPrices(pricesFile)
+    #getMyPosition(prcAll)
+    getMyPositionTest_Kenzo(prcAll)
+
+if __name__ == "__main__":
+    main()
