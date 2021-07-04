@@ -5,7 +5,8 @@ import matplotlib
 import csv
 import talib as tal
 
-# TESTING
+
+# HI
 
 """
 Class which holds all stock data for a single stock
@@ -141,9 +142,6 @@ def get_wma(df):
     return wma_trends
 
 
-
-
-# Conventional main python script setup, also testing
 def main():
     pricesFile = "./prices250.txt"
     prcAll = loadPrices(pricesFile)
@@ -152,8 +150,3 @@ def main():
 
 if __name__ == "__main__":
   main()
-
-
-
-
-
