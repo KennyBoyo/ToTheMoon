@@ -2,8 +2,10 @@
 import numpy as np
 import pandas as pd
 import matplotlib
-#import csv
+import csv
 import talib as tal
+
+# TESTING
 
 """
 Final submission function
