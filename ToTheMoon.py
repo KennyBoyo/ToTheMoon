@@ -6,8 +6,6 @@ import csv
 import talib as tal
 
 
-# HI
-
 """
 Class which holds all stock data for a single stock
 """
