@@ -37,6 +37,13 @@ class Stock():
     def get_wma(self):
         return self._wma
 
+    def get_pos(self):
+        #add your calcs here
+        pos = 1
+        pos = pos * 10000
+        return pos
+
+
 def loadPrices(fn):
     global nt, nInst
     df=pd.read_csv(fn, sep='\s+', header=None, index_col=None)
@@ -58,7 +65,10 @@ def getMyPosition(prcHistSoFar):
     #for s in sl:
         #print(s.get_max_correl_index())
         #print(s.get_wma())
-    return
+    positions = []
+    for stock in sl:
+        positions.append(stock.get_pos())
+    return positions
 
 """
 Function used to test implementation of new functons
