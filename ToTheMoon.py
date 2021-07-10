@@ -1,7 +1,7 @@
 #hehe xd
 import numpy as np
 import pandas as pd
-import matplotlib
+import matplotlib.pyplot as plt
 import csv
 import talib as tal
 
@@ -14,6 +14,7 @@ class Stock():
     def __init__(self, data):
         self._wma = []
         self._correl = []
+        self._aroon = []
         self._data = data
 
     def set_data(self, data):
@@ -24,6 +25,9 @@ class Stock():
 
     def set_wma(self, wma):
         self._wma = wma
+
+    def set_aroon(self, aroon):
+        self._aroon = aroon
 
     def get_data(self):
         return self._data
@@ -37,11 +41,34 @@ class Stock():
     def get_wma(self):
         return self._wma
 
-    def get_pos(self):
+    def get_aroon(self):
+        return self._aroon
+
+    def get_wma_pos(self):
         #add your calcs here
-        pos = 1
-        pos = pos * 10000
+        pos = 0
+        if self.get_wma():
+            pos = -1
+        else:
+            pos = 1
+        pos = pos * (10000/self.get_data()[-1])
         return pos
+
+    def get_aroon_pos(self):
+        #add your calcs here
+        th = 70
+        aroon = self.get_aroon()
+        if aroon[-1] > th:
+            pos = 1
+        elif aroon[-1] < -th:
+            pos = -1
+        else:
+            pos = 0
+        pos = pos * (10000/self.get_data()[-1])
+        return pos
+
+    def get_def_pos(self):
+        return (10000/self.get_data()[-1])
 
 
 def loadPrices(fn):
@@ -60,14 +87,21 @@ Final submission function
 def getMyPosition(prcHistSoFar):
     #df = get_data('prices250.txt')
     df = pd.DataFrame(prcHistSoFar).T
-    print(df[0].describe())
+    #print(df[0].describe())
     sl = gen_stocks(df)
     #for s in sl:
         #print(s.get_max_correl_index())
         #print(s.get_wma())
     positions = []
     for stock in sl:
-        positions.append(stock.get_pos())
+        #positions.append(stock.get_aroon_pos())
+        positions.append(stock.get_def_pos())
+    #for i in range(len(sl)):
+        #if i == 2:
+        #    positions.append(sl[i].get_pos())
+        #else:
+        #    positions.append(0)
+    #print(positions)
     return positions
 
 """
@@ -95,12 +129,14 @@ Function that generates a list of stocks from the provided data
 """
 def gen_stocks(df):
     sl = []
-    c = get_correl(df)
-    wma = get_wma(df)
+    #c = get_correl(df)
+    #wma = get_wma(df)
+    aroon = get_aroon(df)
     for i in range(df.shape[1]):
-        sl.append(Stock(df[i]))
-        sl[i].set_correl(c[i])
-        sl[i].set_wma(wma[i])
+        sl.append(Stock(df[i].to_numpy()))
+        #sl[i].set_correl(c[i])
+        #sl[i].set_wma(wma[i])
+        sl[i].set_aroon(aroon[i])
     return sl
 
 """
@@ -136,6 +172,7 @@ Function that gets the weighted moving average of a set of prices
 def get_wma(df):
     wma = []
     tp = 10
+    tp2 = 20
     for i in range(df.shape[1]):
         wma.append(tal.WMA(df[i], timeperiod = tp))
     #return wma
@@ -144,12 +181,83 @@ def get_wma(df):
     wma_trends = []
     for i in range(df.shape[1]):
         tempWMA = tal.WMA(df[i], timeperiod = tp)
+        #tempWMA2 = tal.WMA(df[i], timeperiod=tp2)
+        #plt.plot(tempWMA)
+        #plt.plot(tempWMA2)
+        #plt.plot(df[i].values)
+        #plt.title(i)
+        #plt.show()
+
         wma1 = np.average(tempWMA.to_numpy()[tp-1:int(np.floor(df.shape[0] - tp + 1))])
         wma2 = np.average(tempWMA.to_numpy()[int(np.ceil(df.shape[0] - tp + 1)):])
         wma_trends.append(wma2>wma1)
-        print("old: {}, new: {}, result: {}".format(wma1, wma2, wma2>wma1))
+        #print("old: {}, new: {}, result: {}".format(wma1, wma2, wma2>wma1))
     return wma_trends
 
+"""
+Function that gets the stochastic indicator of the stock. (use over short time period for trigger, 
+longer periods for filter)
+
+:param df: pd.Dataframe | Dataframe values containing all prices to date of all stocks
+
+:return: list | list of all stochastic indicator values
+"""
+def get_stoch(df, tp):
+    stoch = []
+    for i in range(df.shape[1]):
+        stoch.append(tal.STOCH())
+
+"""
+Function that determines the trend using the aroon oscillator and filters the positions which can be taken
+
+:param df: pd.Dataframe | Dataframe values containing all prices to date of all stocks
+
+:return: list | list of aroon indicator values
+"""
+def get_aroon(df):
+    aroon = []
+    tp = 25
+    for i in range(df.shape[1]):
+        aroonTemp = []
+        for j in range(df.shape[0]):
+            if j >= tp:
+                #print(df.index(max(df[i][(j-14):j])))
+                #print(df.index(min(df[i][(j-14):j])))
+                array = df[i][(j-tp):j].values.tolist()
+                maxindex = array.index(max(array))
+                minindex = array.index(min(array))
+                aroonhigh = 100*(float(maxindex))/tp
+                aroonlow = 100*(float(minindex))/tp
+                aroonTemp.append(float(aroonhigh-aroonlow))
+                #print(array)
+                #aroonTemp.append(tal.AROONOSC(array, array))
+        aroon.append(aroonTemp)
+
+
+        """fig = plt.figure()
+        ax = fig.add_subplot(2, 1, 1)
+        # Major ticks every 20, minor ticks every 5
+        major_ticks = np.arange(-100, 101, 25)
+        minor_ticks = np.arange(-100, 101, 10)
+
+        ax.set_yticks(major_ticks)
+        ax.set_yticks(minor_ticks, minor=True)
+
+        # And a corresponding grid
+        ax.grid(which='both')
+
+        # Or if you want different settings for the grids:
+        ax.grid(which='minor', alpha=0.2)
+        ax.grid(which='major', alpha=0.5)
+
+
+        plt.plot(aroonTemp)
+        ax2 = fig.add_subplot(2, 1, 2)
+        plt.plot(df[i].values.tolist())
+        plt.title(i)
+        plt.show()"""
+        #print(aroonTemp)
+    return aroon
 
 
 
