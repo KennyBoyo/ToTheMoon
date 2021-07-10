@@ -47,11 +47,15 @@ class Stock():
     def get_wma_pos(self):
         #add your calcs here
         pos = 0
-        if self.get_wma():
+        wma = self.get_wma()
+        sci = get_sign_change_index(wma)
+        print(sci)
+        pos = sci[0]
+        """if self.get_wma():
             pos = -1
         else:
-            pos = 1
-        pos = pos * (10000/self.get_data()[-1])
+            pos = 1"""
+        pos = pos * (10000/self.get_data()[sci[1]])
         return pos
 
     def get_aroon_pos(self):
@@ -77,6 +81,34 @@ def loadPrices(fn):
     nt, nInst = df.values.shape
     return (df.values).T
 
+
+def get_sign_change_index(list):
+    trend = 0
+    #print(list)
+    for i in range(len(list)):
+        #print(list[-1-i])
+        #print(list[-2-i])
+        #print(list[-1-i]>list[-2-i])
+        #print(trend)
+        if list[-1-i]>list[-2-i]:
+            #increasing
+            if trend == 0:
+                trend = 1
+            elif trend == 1:
+                continue
+            elif trend == -1:
+                return [1, len(list) - i]
+
+        elif list[-1-i]<list[-2-i]:
+            #decreasing
+            if trend == 0:
+                trend = -1
+            elif trend == 1:
+                return [-1, len(list) - i]
+            elif trend == -1:
+                continue
+
+
 """
 Final submission function
 
@@ -94,8 +126,9 @@ def getMyPosition(prcHistSoFar):
         #print(s.get_wma())
     positions = []
     for stock in sl:
+        positions.append(stock.get_wma_pos())
         #positions.append(stock.get_aroon_pos())
-        positions.append(stock.get_def_pos())
+        #positions.append(stock.get_def_pos())
     #for i in range(len(sl)):
         #if i == 2:
         #    positions.append(sl[i].get_pos())
@@ -110,15 +143,27 @@ Function used to test implementation of new functons
 def getMyPositionTest_Kenzo(prcHistSoFar):
     #df = get_data('prices250.txt')
     df = pd.DataFrame(prcHistSoFar).T
-    print(df[0])
+    #print(df[0])
     c = get_correl(df)
-    print(len(c))
-    for i in c:
-        print("index1={}, index2={}, correlation={}, length"
-              .format(i.index(1), i.index(sorted(i)[-2]), sorted(i)[-2]), len(i))
-    print(df[0].describe())
-    wma = get_wma(df)
-    return
+    positions = []
+    #print(len(c))
+    #for i in c:
+    #    print("index1={}, index2={}, correlation={}, length"
+    #          .format(i.index(1), i.index(sorted(i)[-2]), sorted(i)[-2]), len(i))
+    #print(df[0].describe())
+    sl = gen_stocks(df)
+    for stock in sl:
+        #print(stock.get_wma())
+        print(stock.get_max_correl_index())
+        #print(stock.get_aroon())
+        plt.subplot(2,1,1)
+        plt.plot(stock.get_data())
+        plt.plot(stock.get_wma())
+        plt.subplot(2,1,2)
+        plt.plot(stock.get_aroon())
+        plt.show()
+        positions.append(stock.get_wma_pos())
+    return positions
 
 """
 Function that generates a list of stocks from the provided data
@@ -129,14 +174,15 @@ Function that generates a list of stocks from the provided data
 """
 def gen_stocks(df):
     sl = []
-    #c = get_correl(df)
+    c = get_correl(df)
     #wma = get_wma(df)
-    aroon = get_aroon(df)
+    #aroon = get_aroon(df)
     for i in range(df.shape[1]):
         sl.append(Stock(df[i].to_numpy()))
-        #sl[i].set_correl(c[i])
+        sl[i].set_correl(c[i])
         #sl[i].set_wma(wma[i])
-        sl[i].set_aroon(aroon[i])
+        sl[i].set_wma(get_wma(df[i], 10))
+        sl[i].set_aroon(get_aroon(df[i], 25))
     return sl
 
 """
@@ -169,13 +215,16 @@ Function that gets the weighted moving average of a set of prices
 
 :return: list | list of all weighted moving average points for all stocks
 """
-def get_wma(df):
+def get_wma(df, tp):
+    return tal.WMA(df, timeperiod = tp).tolist()
+
+
     wma = []
     tp = 10
     tp2 = 20
     for i in range(df.shape[1]):
         wma.append(tal.WMA(df[i], timeperiod = tp))
-    #return wma
+    return wma
 
     #extra code to get trend? returns True if bullish, False if bearish
     wma_trends = []
@@ -214,50 +263,45 @@ Function that determines the trend using the aroon oscillator and filters the po
 
 :return: list | list of aroon indicator values
 """
-def get_aroon(df):
-    aroon = []
-    tp = 25
-    for i in range(df.shape[1]):
-        aroonTemp = []
-        for j in range(df.shape[0]):
-            if j >= tp:
-                #print(df.index(max(df[i][(j-14):j])))
-                #print(df.index(min(df[i][(j-14):j])))
-                array = df[i][(j-tp):j].values.tolist()
-                maxindex = array.index(max(array))
-                minindex = array.index(min(array))
-                aroonhigh = 100*(float(maxindex))/tp
-                aroonlow = 100*(float(minindex))/tp
-                aroonTemp.append(float(aroonhigh-aroonlow))
-                #print(array)
-                #aroonTemp.append(tal.AROONOSC(array, array))
-        aroon.append(aroonTemp)
+def get_aroon(df, tp):
+    aroonTemp = []
+    for j in range(df.shape[0]):
+        if j >= tp:
+            #print(df.index(max(df[i][(j-14):j])))
+            #print(df.index(min(df[i][(j-14):j])))
+            array = df[(j-tp):j].values.tolist()
+            maxindex = array.index(max(array))
+            minindex = array.index(min(array))
+            aroonhigh = 100*(float(maxindex))/tp
+            aroonlow = 100*(float(minindex))/tp
+            aroonTemp.append(float(aroonhigh-aroonlow))
+            #print(array)
 
 
-        """fig = plt.figure()
-        ax = fig.add_subplot(2, 1, 1)
-        # Major ticks every 20, minor ticks every 5
-        major_ticks = np.arange(-100, 101, 25)
-        minor_ticks = np.arange(-100, 101, 10)
+    """fig = plt.figure()
+    ax = fig.add_subplot(2, 1, 1)
+    # Major ticks every 20, minor ticks every 5
+    major_ticks = np.arange(-100, 101, 25)
+    minor_ticks = np.arange(-100, 101, 10)
 
-        ax.set_yticks(major_ticks)
-        ax.set_yticks(minor_ticks, minor=True)
+    ax.set_yticks(major_ticks)
+    ax.set_yticks(minor_ticks, minor=True)
 
-        # And a corresponding grid
-        ax.grid(which='both')
+    # And a corresponding grid
+    ax.grid(which='both')
 
-        # Or if you want different settings for the grids:
-        ax.grid(which='minor', alpha=0.2)
-        ax.grid(which='major', alpha=0.5)
+    # Or if you want different settings for the grids:
+    ax.grid(which='minor', alpha=0.2)
+    ax.grid(which='major', alpha=0.5)
 
 
-        plt.plot(aroonTemp)
-        ax2 = fig.add_subplot(2, 1, 2)
-        plt.plot(df[i].values.tolist())
-        plt.title(i)
-        plt.show()"""
-        #print(aroonTemp)
-    return aroon
+    plt.plot(aroonTemp)
+    ax2 = fig.add_subplot(2, 1, 2)
+    plt.plot(df[i].values.tolist())
+    plt.title(i)
+    plt.show()"""
+    #print(aroonTemp)
+    return aroonTemp
 
 
 
@@ -265,8 +309,8 @@ def get_aroon(df):
 def main():
     pricesFile = "./prices250.txt"
     prcAll = loadPrices(pricesFile)
-    getMyPosition(prcAll)
-    #getMyPositionTest_Kenzo(prcAll)
+    #getMyPosition(prcAll)
+    getMyPositionTest_Kenzo(prcAll)
 
 if __name__ == "__main__":
   main()
