@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 from ToTheMoon import getMyPosition as getPosition
+from ToTheMoon import plot as plot
 
 # Algorithm testing file. 
 # Quantitative judging will be determined from output of this program.
@@ -80,5 +81,5 @@ print ("return: %.5lf" % ret)
 print ("annSharpe(PL): %.2lf " % sharpe)
 print ("totDvolume: %.0lf " % dvol)
 
-
+plot()
 
