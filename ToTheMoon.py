@@ -41,34 +41,37 @@ class Stock():
     def get_wma(self):
         return self._wma
 
-    def get_aroon(self):
-        return self._aroon
+    def get_aroon(self, index):
+        return get_aroon(self._data, 25, index)
 
     def get_wma_pos(self):
         #add your calcs here
         pos = 0
         wma = self.get_wma()
         sci = get_sign_change_index(wma)
-        print(sci)
+        #print(sci)
         pos = sci[0]
         """if self.get_wma():
             pos = -1
         else:
             pos = 1"""
-        pos = pos * (10000/self.get_data()[sci[1]])
+        aroon = self.get_aroon_pos(sci[1])
+        pos = pos * (10000/self.get_data()[sci[1]]) * aroon
         return pos
 
-    def get_aroon_pos(self):
+    def get_aroon_pos(self, index):
         #add your calcs here
-        th = 70
-        aroon = self.get_aroon()
-        if aroon[-1] > th:
+        th = 0.250
+        aroon = get_aroon(self._data, 25, index)[-1]/100
+        print(aroon)
+        if aroon > th:
             pos = 1
-        elif aroon[-1] < -th:
-            pos = -1
+        elif aroon < -th:
+            #pos = -1
+            pos = 1
         else:
             pos = 0
-        pos = pos * (10000/self.get_data()[-1])
+        #pos = pos * (10000/self.get_data()[-1])
         return pos
 
     def get_def_pos(self):
@@ -127,6 +130,8 @@ def getMyPosition(prcHistSoFar):
     positions = []
     for stock in sl:
         positions.append(stock.get_wma_pos())
+    for i in range(len(positions)):
+        positions[i] = (positions[i] + positions[sl[i].get_max_correl_index()]) / 2
         #positions.append(stock.get_aroon_pos())
         #positions.append(stock.get_def_pos())
     #for i in range(len(sl)):
@@ -159,8 +164,8 @@ def getMyPositionTest_Kenzo(prcHistSoFar):
         plt.subplot(2,1,1)
         plt.plot(stock.get_data())
         plt.plot(stock.get_wma())
-        plt.subplot(2,1,2)
-        plt.plot(stock.get_aroon())
+        #plt.subplot(2,1,2)
+        #plt.plot(stock.get_aroon())
         plt.show()
         positions.append(stock.get_wma_pos())
     return positions
@@ -178,11 +183,11 @@ def gen_stocks(df):
     #wma = get_wma(df)
     #aroon = get_aroon(df)
     for i in range(df.shape[1]):
-        sl.append(Stock(df[i].to_numpy()))
+        sl.append(Stock(df[i].values.tolist()))
         sl[i].set_correl(c[i])
         #sl[i].set_wma(wma[i])
         sl[i].set_wma(get_wma(df[i], 10))
-        sl[i].set_aroon(get_aroon(df[i], 25))
+        #sl[i].set_aroon(get_aroon(df[i].values.tolist()))
     return sl
 
 """
@@ -263,9 +268,15 @@ Function that determines the trend using the aroon oscillator and filters the po
 
 :return: list | list of aroon indicator values
 """
-def get_aroon(df, tp):
+def get_aroon(data, tp, index):
     aroonTemp = []
-    for j in range(df.shape[0]):
+    array = data[index-tp:index]
+    maxindex = array.index(max(array))
+    minindex = array.index(min(array))
+    aroonhigh = 100 * (float(maxindex)) / tp
+    aroonlow = 100 * (float(minindex)) / tp
+    aroonTemp.append(float(aroonhigh - aroonlow))
+    """for j in range(df.shape[0]):
         if j >= tp:
             #print(df.index(max(df[i][(j-14):j])))
             #print(df.index(min(df[i][(j-14):j])))
@@ -275,7 +286,7 @@ def get_aroon(df, tp):
             aroonhigh = 100*(float(maxindex))/tp
             aroonlow = 100*(float(minindex))/tp
             aroonTemp.append(float(aroonhigh-aroonlow))
-            #print(array)
+            #print(array)"""
 
 
     """fig = plt.figure()
