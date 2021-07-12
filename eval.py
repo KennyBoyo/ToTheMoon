@@ -41,15 +41,17 @@ def calcPL(prcHist):
     for t in range(201,251):
         prcHistSoFar = prcHist[:,:t]
         newPosOrig = getPosition(prcHistSoFar)
-        curPrices = prcHistSoFar[:,-1] 
+        curPrices = prcHistSoFar[:,-1]
         posLimits = np.array([int(x) for x in dlrPosLimit / curPrices])
         newPos = np.array([int(p) for p in np.clip(newPosOrig, -posLimits, posLimits)])
+        print("new: {}, old: {}".format(newPos,curPos))
         deltaPos = newPos - curPos
-        print(deltaPos)
+        #print(deltaPos)
         dvolumes = curPrices * np.abs(deltaPos)
         dvolume0 = np.sum(dvolumes[:50])
         dvolume1 = np.sum(dvolumes[50:])
         dvolume = np.sum(dvolumes)
+        #print(dvolume)
         totDVolume += dvolume
         totDVolume0 += dvolume0
         totDVolume1 += dvolume1

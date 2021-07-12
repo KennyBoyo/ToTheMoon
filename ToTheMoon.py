@@ -13,6 +13,7 @@ Class which holds all stock data for a single stock
 class Stock():
     def __init__(self, data):
         self._wma = []
+        self._wma2 = []
         self._correl = []
         self._aroon = []
         self._data = data
@@ -25,6 +26,9 @@ class Stock():
 
     def set_wma(self, wma):
         self._wma = wma
+
+    def set_wma2(self, wma):
+        self._wma2 = wma
 
     def set_aroon(self, aroon):
         self._aroon = aroon
@@ -41,6 +45,9 @@ class Stock():
     def get_wma(self):
         return self._wma
 
+    def get_wma2(self):
+        return self._wma2
+
     def get_aroon(self, index):
         return get_aroon(self._data, 25, index)
 
@@ -48,6 +55,9 @@ class Stock():
         #add your calcs here
         pos = 0
         wma = self.get_wma()
+        wma2 = self.get_wma2()
+        grad = get_gradient(wma)[-1]
+        grad2 = get_gradient(wma2)[-1]
         sci = get_sign_change_index(wma)
         #print(sci)
         pos = sci[0]
@@ -56,19 +66,25 @@ class Stock():
         else:
             pos = 1"""
         aroon = self.get_aroon_pos(sci[1])
-        pos = pos * (10000/self.get_data()[sci[1]]) * aroon
+        pos = pos * (10000/self.get_data()[sci[1]]) * aroon * abs((grad+grad2)/2)
         return pos
 
     def get_aroon_pos(self, index):
         #add your calcs here
-        th = 0.250
-        aroon = get_aroon(self._data, 25, index)[-1]/100
+        th = 0.15
+        aroon = get_aroon(self._data, 20, index)[-1]/100
         print(aroon)
         if aroon > th:
             pos = 1
+            pos = 3*abs(aroon)
+            if pos > 1:
+                pos = 1
         elif aroon < -th:
             #pos = -1
             pos = 1
+            pos = 3 * abs(aroon)
+            if pos > 1:
+                pos = 1
         else:
             pos = 0
         #pos = pos * (10000/self.get_data()[-1])
@@ -84,6 +100,20 @@ def loadPrices(fn):
     nt, nInst = df.values.shape
     return (df.values).T
 
+
+def get_gradient(list):
+    gradList = []
+    th = 0.0030
+    #1 if up, -1 if down
+    for i in range(len(list)-1):
+        if list[i] < list[i+1] and abs(list[i] - list[i+1])*2/(list[i] + list[i+1]) > th:
+            gradList.append(1)
+        elif list[i] > list[i+1] and abs(list[i] - list[i+1])*2/(list[i] + list[i+1]) > th:
+            gradList.append(-1)
+        else:
+            gradList.append(0)
+    #print(gradList)
+    return gradList
 
 def get_sign_change_index(list):
     trend = 0
@@ -124,16 +154,22 @@ def getMyPosition(prcHistSoFar):
     df = pd.DataFrame(prcHistSoFar).T
     #print(df[0].describe())
     sl = gen_stocks(df)
-    #for s in sl:
-        #print(s.get_max_correl_index())
-        #print(s.get_wma())
     positions = []
+    index = 0
     for stock in sl:
         positions.append(stock.get_wma_pos())
-    for i in range(len(positions)):
-        positions[i] = (positions[i] + positions[sl[i].get_max_correl_index()]) / 2
         #positions.append(stock.get_aroon_pos())
         #positions.append(stock.get_def_pos())
+        #if df.shape[0] % 2 == 0 and index == 0:
+        #    positions.append(1)
+        #    index = 1
+        #else:
+        #    positions.append(0)
+    """for i in range(len(positions)):
+        positions[i] = (positions[i]*sl[i].get_data()[-1] +
+                        positions[sl[i].get_max_correl_index()]*sl[sl[i].get_max_correl_index()].get_data()[-1]) / (2 * sl[i].get_data()[-1])
+    """
+
     #for i in range(len(sl)):
         #if i == 2:
         #    positions.append(sl[i].get_pos())
@@ -161,10 +197,15 @@ def getMyPositionTest_Kenzo(prcHistSoFar):
         #print(stock.get_wma())
         print(stock.get_max_correl_index())
         #print(stock.get_aroon())
-        plt.subplot(2,1,1)
-        plt.plot(stock.get_data())
-        plt.plot(stock.get_wma())
-        #plt.subplot(2,1,2)
+        plt.subplot(3,1,1)
+        plt.plot(stock.get_data(), label = 'data')
+        plt.plot(stock.get_wma(), label = 'slow ma')
+        plt.plot(stock.get_wma2(), label = 'fast ma')
+        plt.legend()
+        plt.subplot(3, 1, 2)
+        plt.scatter(range(len(stock.get_wma())-1), get_gradient(stock.get_wma()))
+        plt.subplot(3, 1, 3)
+        plt.scatter(range(len(stock.get_wma())-1), get_gradient(stock.get_wma2()))
         #plt.plot(stock.get_aroon())
         plt.show()
         positions.append(stock.get_wma_pos())
@@ -186,7 +227,8 @@ def gen_stocks(df):
         sl.append(Stock(df[i].values.tolist()))
         sl[i].set_correl(c[i])
         #sl[i].set_wma(wma[i])
-        sl[i].set_wma(get_wma(df[i], 10))
+        sl[i].set_wma(get_wma(df[i], 21))
+        sl[i].set_wma2(get_wma(df[i], 10))
         #sl[i].set_aroon(get_aroon(df[i].values.tolist()))
     return sl
 
