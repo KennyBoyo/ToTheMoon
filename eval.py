@@ -44,7 +44,7 @@ def calcPL(prcHist):
         curPrices = prcHistSoFar[:,-1]
         posLimits = np.array([int(x) for x in dlrPosLimit / curPrices])
         newPos = np.array([int(p) for p in np.clip(newPosOrig, -posLimits, posLimits)])
-        print("new: {}, old: {}".format(newPos,curPos))
+        #print("new: {}, old: {}".format(newPos,curPos))
         deltaPos = newPos - curPos
         #print(deltaPos)
         dvolumes = curPrices * np.abs(deltaPos)

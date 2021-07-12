@@ -71,20 +71,20 @@ class Stock():
 
     def get_aroon_pos(self, index):
         #add your calcs here
-        th = 0.15
-        aroon = get_aroon(self._data, 20, index)[-1]/100
-        print(aroon)
+        th = 0.1
+        aroon = get_aroon(self._data, 50, index)[-1]/100
+        #print(aroon)
         if aroon > th:
             pos = 1
-            pos = 3*abs(aroon)
-            if pos > 1:
-                pos = 1
+            #pos = 3*abs(aroon)
+            #if pos > 1:
+            #    pos = 1
         elif aroon < -th:
             #pos = -1
             pos = 1
-            pos = 3 * abs(aroon)
-            if pos > 1:
-                pos = 1
+            #pos = 3 * abs(aroon)
+            #if pos > 1:
+            #    pos = 1
         else:
             pos = 0
         #pos = pos * (10000/self.get_data()[-1])
@@ -93,6 +93,39 @@ class Stock():
     def get_def_pos(self):
         return (10000/self.get_data()[-1])
 
+    # def get_schaff_pos(self):
+    #     return STC(np.array(self.get_data())) * (10000/self.get_data()[-1])
+
+
+"""Finds the Schaff trend cycle and returns an indicator RIP"""
+# def STC(prices):
+#     macd, signal, hist = tal.MACD(prices,
+#                                   fastperiod=23,
+#                                   slowperiod=50,
+#                                   signalperiod=10)
+#
+#     k, d = tal.STOCH(high=macd,
+#                      low=macd,
+#                      close=macd,
+#                      fastk_period=10,
+#                      slowk_period=10)
+#
+#     macdValue = macd[-1]
+#     kValue = k[-1]
+#     dValue = d[-1]
+#
+#     """if 0 <= dValue - kValue < 0.01:
+#         return 1
+#     if 0 <= kValue - dValue < 0.01:
+#         return -1"""
+#
+#     schaff = 100 * (macdValue - kValue) / (dValue - kValue)
+#     print(schaff)
+#     """if schaff > 100:
+#         return 1
+#     elif schaff < -100:
+#         return -1"""
+#     return schaff
 
 def loadPrices(fn):
     global nt, nInst
@@ -103,7 +136,7 @@ def loadPrices(fn):
 
 def get_gradient(list):
     gradList = []
-    th = 0.0030
+    th = 0.005
     #1 if up, -1 if down
     for i in range(len(list)-1):
         if list[i] < list[i+1] and abs(list[i] - list[i+1])*2/(list[i] + list[i+1]) > th:
@@ -112,17 +145,11 @@ def get_gradient(list):
             gradList.append(-1)
         else:
             gradList.append(0)
-    #print(gradList)
     return gradList
 
 def get_sign_change_index(list):
     trend = 0
-    #print(list)
     for i in range(len(list)):
-        #print(list[-1-i])
-        #print(list[-2-i])
-        #print(list[-1-i]>list[-2-i])
-        #print(trend)
         if list[-1-i]>list[-2-i]:
             #increasing
             if trend == 0:
@@ -150,14 +177,13 @@ Final submission function
 :return: np.array | 100 integers denoting daily position
 """
 def getMyPosition(prcHistSoFar):
-    #df = get_data('prices250.txt')
     df = pd.DataFrame(prcHistSoFar).T
-    #print(df[0].describe())
     sl = gen_stocks(df)
     positions = []
     index = 0
     for stock in sl:
         positions.append(stock.get_wma_pos())
+        #positions.append(stock.get_schaff_pos())
         #positions.append(stock.get_aroon_pos())
         #positions.append(stock.get_def_pos())
         #if df.shape[0] % 2 == 0 and index == 0:
@@ -195,6 +221,7 @@ def getMyPositionTest_Kenzo(prcHistSoFar):
     sl = gen_stocks(df)
     for stock in sl:
         #print(stock.get_wma())
+        #stock.get_schaff_pos()
         print(stock.get_max_correl_index())
         #print(stock.get_aroon())
         plt.subplot(3,1,1)
@@ -227,8 +254,8 @@ def gen_stocks(df):
         sl.append(Stock(df[i].values.tolist()))
         sl[i].set_correl(c[i])
         #sl[i].set_wma(wma[i])
-        sl[i].set_wma(get_wma(df[i], 21))
-        sl[i].set_wma2(get_wma(df[i], 10))
+        sl[i].set_wma(get_wma(df[i], 16))
+        sl[i].set_wma2(get_wma(df[i], 8))
         #sl[i].set_aroon(get_aroon(df[i].values.tolist()))
     return sl
 
