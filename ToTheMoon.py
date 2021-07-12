@@ -23,7 +23,7 @@ def getMyPosition(prcHistSoFar):
 """
 Function used to test implementation of new functons
 """
-def getMyPositionTest_Kenzo(prcHistSoFar):
+def whatsGoingOn(prcHistSoFar):
     #df = get_data('prices250.txt')
     df = pd.DataFrame(prcHistSoFar).T
     print(df[0])
@@ -89,23 +89,23 @@ def get_sma(df):
         sma.append(tal.SMA(df[i]))
     return sma
 
+def loadPrices(fn):
+    global nt, nInst
+    df=pd.read_csv(fn, sep='\s+', header=None, index_col=None)
+    nt, nInst = df.values.shape
+    return (df.values).T
 
 # Conventional main python script setup, also testing
 def main():
     pricesFile = "./prices250.txt"
     prcAll = loadPrices(pricesFile)
     #getMyPosition(prcAll)
-    getMyPositionTest_Kenzo(prcAll)
+    whatsGoingOn(prcAll)
 
 if __name__ == "__main__":
   main()
 
 
-def loadPrices(fn):
-    global nt, nInst
-    df=pd.read_csv(fn, sep='\s+', header=None, index_col=None)
-    nt, nInst = df.values.shape
-    return (df.values).T
 
 class Stock():
     def __init__(self, data):
